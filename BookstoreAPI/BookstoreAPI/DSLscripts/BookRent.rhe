@@ -8,7 +8,6 @@ Module BookRent
 		ShortString Email { Unique; }
 		Reference ClientType;
 		DateTime DateCreated { CreationTIme; }
-
 		Deactivatable;
 	}
 
@@ -29,10 +28,14 @@ Module BookRent
 
 	Entity Book
 	{
-		ShortString Code {Unique; }
+		ShortString Code { Unique; }
 		ShortString Title { Required; }
 		ShortString Subject;
-		ShortString NumberOfPages { Required; }
+		Integer NumberOfPages { Required; }
+
+		ItemFilter NotContainsBook 'item => !item.Title.Contains("Book")';
+		ItemFilter InvalidNumberOfPages 'item => item.NumberOfPages <= 0';
+		InvalidData InvalidNumberOfPages 'It is not allowed to enter number of pages less Author equal than 0'; 
 	}
 
 	Entity Genre
@@ -63,6 +66,18 @@ Module BookRent
 		Reference Client;
 		UniqueMultiple 'Book Client DateFrom';
 		DateTime DateCreated {CreationTIme; }
+
+		ComposableFilterBy ClientRents '(query, repository, parameter)  => {
+			var filtered = query.Where(item => item.Client.ID == parameter.ClientId && item.Book.Title == parameter.Title);
+			return filtered;
+		}';
+
+	}
+
+	Parameter ClientRents
+	{
+		Guid ClientId;
+		ShortString Title;
 	}
 
 	Browse BookGenres BookRent.BookGenre
@@ -72,7 +87,24 @@ Module BookRent
 		Take 'Genre.Name';
 	}	
 
-	SqlQueryable BookInfo "SELECT b.Title,
+	Action BookInsert '
+	(parameter,repository, userInfo) => 
+	{
+		for(int i=4; i < parameter.NumberOfBooks; i++)
+		{
+			var newBook = new BookRent.Book {Code = parameter.CodePrefix + i, Title = parameter.Title, NumberOfPages = 100};
+			repository.BookRent.Book.Insert(newBook);
+		}
+	}'
+	{
+		Integer NumberOfBooks;
+		ShortString CodePrefix;
+		ShortString Title;
+	}
+
+
+	SqlQueryable BookInfo "SELECT b.ID,
+								  b.Title,
 							      b.NumberOfPages,
 								  a.[Name], 
 								  a.Surname, 
@@ -81,5 +113,9 @@ Module BookRent
 							LEFT JOIN BookRent.BookAuthor ba ON ba.BookID = b.ID
 							LEFT JOIN BookRent.Author a ON a.ID = ba.AuthorID
 							LEFT JOIN BookRent.BookGenre bg ON bg.BookID = b.ID
-							LEFT JOIN BookRent.Genre g ON g.ID = bg.GenreID";
+							LEFT JOIN BookRent.Genre g ON g.ID = bg.GenreID"
+	{
+		ShortString Title;
+	}
+
 }
