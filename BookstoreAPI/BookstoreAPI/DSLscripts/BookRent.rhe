@@ -1,0 +1,85 @@
+Module BookRent
+{
+	Entity Client
+	{
+		ShortString Code { Unique; Required; MinLength 3; }
+		ShortString Name { Required; }
+		ShortString Surname { Required; }
+		ShortString Email { Unique; }
+		Reference ClientType;
+		DateTime DateCreated { CreationTIme; }
+
+		Deactivatable;
+	}
+
+	Entity ClientType
+	{
+		ShortString Code { Unique; Required; }
+		ShortString Name { Required; }
+		ShortString Description;
+	}
+
+	Entity Author
+	{
+		ShortString Code { Unique; Required; }
+		ShortString Name { Required; }
+		ShortString Surname { Required; }
+		ShortString Initials {MaxLength 5; }
+	}
+
+	Entity Book
+	{
+		ShortString Code {Unique; }
+		ShortString Title { Required; }
+		ShortString Subject;
+		ShortString NumberOfPages { Required; }
+	}
+
+	Entity Genre
+	{
+		ShortString Code { Unique; }
+		ShortString Name;
+	}
+
+	Entity BookGenre
+	{
+		Reference Book;
+		Reference Genre;
+		UniqueMultiple 'Book Genre';
+	}
+
+	Entity BookAuthor
+	{
+		Reference Book;
+		Reference Author;
+		UniqueMultiple 'Book Author';
+	}
+
+	Entity Rent
+	{
+		Date DateFrom;
+		Date DateTo;
+		Reference Book;
+		Reference Client;
+		UniqueMultiple 'Book Client DateFrom';
+		DateTime DateCreated {CreationTIme; }
+	}
+
+	Browse BookGenres BookRent.BookGenre
+	{
+		Take 'Book.Title';
+		Take 'Book.NumberOfPages';
+		Take 'Genre.Name';
+	}	
+
+	SqlQueryable BookInfo "SELECT b.Title,
+							      b.NumberOfPages,
+								  a.[Name], 
+								  a.Surname, 
+								  g.[Name] Genre
+							FROM BookRent.Book b
+							LEFT JOIN BookRent.BookAuthor ba ON ba.BookID = b.ID
+							LEFT JOIN BookRent.Author a ON a.ID = ba.AuthorID
+							LEFT JOIN BookRent.BookGenre bg ON bg.BookID = b.ID
+							LEFT JOIN BookRent.Genre g ON g.ID = bg.GenreID";
+}
