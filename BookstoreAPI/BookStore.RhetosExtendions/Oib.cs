@@ -1,6 +1,12 @@
-﻿namespace BookStore.RhetosExtendions
+﻿using Rhetos.Dsl;
+using Rhetos.Dsl.DefaultConcepts;
+using System.ComponentModel.Composition;
+
+namespace BookStore.RhetosExtendions
 {
-    public class Oib
+    [Export(typeof(IConceptInfo))]
+    [ConceptKeyword("Oib")]
+    public class Oib : ShortStringPropertyInfo
     {
     }
 }
